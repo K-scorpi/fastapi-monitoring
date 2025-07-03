@@ -13,9 +13,11 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus:/etc/prometheus
+      - ./monitoring:/etc/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - app
 
   grafana:
     image: grafana/grafana:latest
