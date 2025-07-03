@@ -26,3 +26,10 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      #- GF_INSTALL_PLUGINS=alexanderzobnin-datatable
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./generated-dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/provisioning:/etc/grafana/provisioning
+volumes:
+  grafana_data:
