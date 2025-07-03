@@ -6,6 +6,38 @@ services:
     container_name: fastapi-app
     ports:
       - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - fastapi-network  
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 5    
+
+  redis-sentinel:
+    image: redis:latest
+    container_name: redis-sentinel
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./redis-conf/sentinel.conf:/etc/redis/sentinel.conf
+      - redis-sentinel-data:/data
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+    networks:
+      - fastapi-network
+    depends_on:
+      redis:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest
@@ -26,10 +58,15 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      #- GF_INSTALL_PLUGINS=alexanderzobnin-datatable
     volumes:
-      - grafana_data:/var/lib/grafana
+      - grafana-data:/var/lib/grafana
       - ./generated-dashboards:/var/lib/grafana/dashboards
       - ./monitoring/provisioning:/etc/grafana/provisioning
+
 volumes:
-  grafana_data:
+  grafana-data:
+  redis-sentinel-data:
+
+networks:
+  fastapi-network:
+    driver: bridge  

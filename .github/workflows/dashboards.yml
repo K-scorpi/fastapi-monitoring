@@ -1,0 +1,32 @@
+name: Deploy Dashboards to Grafana
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-dashboards:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Jsonnet
+        run: |
+          sudo apt-get update && sudo apt-get install -y jsonnet
+
+      - name: Clone grafonnet
+        run: |
+          git submodule init
+          git submodule update
+
+      - name: Generate Dashboard JSON
+        run: |
+          mkdir -p generated-dashboards
+          jsonnet -J vendor monitoring/dashboards/fastapi-dashboard.libsonnet > generated-dashboards/fastapi-dashboard.json
+
+      - name: Print Dashboard JSON
+        run: cat generated-dashboards/fastapi-dashboard.json
+
+      # Здесь можно добавить шаг загрузки дашборда через grafana-api

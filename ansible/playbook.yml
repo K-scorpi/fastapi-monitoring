@@ -1,0 +1,35 @@
+---
+- name: Deploy FastAPI Monitoring Stack with Redis and Prometheus
+  hosts: servers
+  become: true
+  vars:
+    project_dir: /opt/fastapi-monitoring
+
+  tasks:
+    - name: Install dependencies
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+          - git
+          - python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Clone repo
+      git:
+        repo: git@github.com:yourname/fastapi-monitoring.git
+        dest: "{{ project_dir }}"
+        clone: yes
+        force: yes
+
+    - name: Start Docker stack
+      shell: |
+        cd {{ project_dir }}
+        docker-compose up -d
+
+    - name: Ensure services are running
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
