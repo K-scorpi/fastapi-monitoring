@@ -31,8 +31,10 @@ services:
       - "26379:26379"
     volumes:
       - ./redis-conf/sentinel.conf:/etc/redis/sentinel.conf
+      - ./scripts/start-sentinel.sh:/start-sentinel.sh
+      - ./scripts/resolv.conf:/etc/resolv.conf
       - redis-sentinel-data:/data
-    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+    command: ["/start-sentinel.sh"]
     networks:
       - fastapi-network
     depends_on:
