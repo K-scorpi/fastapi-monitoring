@@ -11,14 +11,15 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10.7,<3.14"
+fastapi = "^0.111.1"
 uvicorn = "^0.29.0"
-fastapi = "^0.96.0"
-prometheus-fastapi-instrumentator = "^3.0.0"  # Совместимая с fastapi=0.96.0
+prometheus-fastapi-instrumentator = "^3.0.0"
+aioredis = "^2.0.1"
+fastapi-cache2 = {extras = ["redis"], version = "^0.2.2"}
+python-logstash = "^0.4.6"
 requests = "^2.32.4"
 pytest = "^8.4.1"
-redis = "^6.2.0"
-aioredis = "^2.0.1"
-fastapi-cache2 = "^0.2.2"
+redis = "^4.6.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"

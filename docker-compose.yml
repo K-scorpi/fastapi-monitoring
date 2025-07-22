@@ -10,6 +10,8 @@ services:
       - redis
     environment:
       - REDIS_URL=redis://redis
+    networks:
+      - fastapi-network
 
   redis:
     image: redis:latest
@@ -17,12 +19,12 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - fastapi-network  
+      - fastapi-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 10s
-      retries: 5    
+      retries: 5
 
   redis-sentinel:
     image: redis:latest
@@ -52,6 +54,8 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     depends_on:
       - app
+    networks:
+      - fastapi-network
 
   grafana:
     image: grafana/grafana:latest
@@ -64,11 +68,80 @@ services:
       - grafana-data:/var/lib/grafana
       - ./generated-dashboards:/var/lib/grafana/dashboards
       - ./monitoring/provisioning:/etc/grafana/provisioning
+    networks:
+      - fastapi-network
+
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    ports:
+      - "80:80"
+      - "8404:8404"
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy
+    depends_on:
+      - app
+    networks:
+      - fastapi-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+    networks:
+      - fastapi-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - fastapi-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - fastapi-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.15.1
+    container_name: logstash
+    volumes:
+      - ./logstash:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+    networks:
+      - fastapi-network
 
 volumes:
   grafana-data:
   redis-sentinel-data:
+  elasticsearch-data:
 
 networks:
   fastapi-network:
-    driver: bridge  
+    driver: bridge
